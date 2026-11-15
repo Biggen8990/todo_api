@@ -1,0 +1,20 @@
+# Environment variables and secrets
+.env
+.env.*
+
+# Allow the safe example file
+!.env.example
+
+# Python virtual environment
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Local databases
+*.db
+instance/
+
+# macOS files
+.DS_Store
