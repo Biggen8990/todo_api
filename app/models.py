@@ -1,5 +1,5 @@
 from app.extensions import db
-from datetime import date, timezone
+from datetime import datetime, timezone
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
