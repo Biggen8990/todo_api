@@ -6,6 +6,7 @@ load_dotenv()
 
 class Config:
     JWT_SECRET = os.getenv("JWT_SECRET")
+    JWT_LIFETIME_MINUTES = int(os.getenv("JWT_LIFETIME_MINUTES", 60))
     DATABASE_URL = os.getenv("DATABASE_URL")
 
 

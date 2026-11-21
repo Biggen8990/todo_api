@@ -1,8 +1,13 @@
 from . import bp
-from flask import request
+from flask import request, current_app, g
 from app.models import User
 from app.extensions import db
 from werkzeug.security import generate_password_hash
+import jwt
+from datetime import datetime, timezone, timedelta
+from .auth import jwt_required
+
+
 
 
 @bp.route("/health", methods=["GET"])
@@ -105,3 +110,64 @@ def register():
         "created_at": new_user.created_at.isoformat()
     }, 201
 
+
+@bp.route("/login", methods=["POST"])
+def login():
+    data = request.get_json(silent=True)
+
+    if not isinstance(data, dict) or not data:
+        return {
+            "code": "VALIDATION_ERROR",
+            "message": "Request body must contain valid JSON.",
+            "field": "body"
+        }, 400
+
+    username = data.get("username")
+    password = data.get("password")
+
+    if not isinstance(username, str) or not username.strip():
+        return {
+            "code": "VALIDATION_ERROR",
+            "message": "A valid username is required.",
+            "field": "username"
+        }, 400
+
+    if not isinstance(password, str) or not password.strip():
+        return {
+            "code": "VALIDATION_ERROR",
+            "message": "A valid password is required.",
+            "field": "password"
+        }, 400
+    
+
+    user = User.query.filter_by(username=username).first()
+
+    if user is None or not user.check_password(password):
+        return {
+            "code": "INVALID_CREDENTIALS",
+            "message": "Incorrect username or password."
+        }, 401
+
+
+    expiration = datetime.now(timezone.utc) + timedelta(
+        minutes=current_app.config["JWT_LIFETIME_MINUTES"]
+    )
+
+    payload = {
+        "sub": str(user.id),
+        "role": "user",
+        "exp": expiration
+    }
+
+    token = jwt.encode(
+        payload,
+        current_app.config["JWT_SECRET"],
+        algorithm="HS256"
+    )
+
+    return {"access_token": token}, 200
+
+@bp.route("/me", methods=["GET"])
+@jwt_required
+def me():
+    return {"user_id": g.current_user_id}, 200
